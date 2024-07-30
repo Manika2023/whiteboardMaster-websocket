@@ -1,0 +1,62 @@
+<!-- templates/board/whiteboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Whiteboard</title>
+    <style>
+        #whiteboard {
+            border: 1px solid black;
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        .dot {
+            width: 4px;
+            height: 4px;
+            background-color: black;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div id="whiteboard"></div>
+    <script>
+        const whiteboard = document.getElementById('whiteboard');
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/whiteboard/');
+
+        whiteboard.addEventListener('mousemove', (event) => {
+            // In JavaScript, event.buttons is a property that indicates which mouse buttons are currently pressed. The value 1 corresponds to the left mouse button.
+            if (event.buttons === 1) {
+                // event.clientX gives the X-coordinate of the mouse pointer relative to the entire browser window. Subtracting whiteboard.offsetLeft (the distance from the left edge of the window to the left edge of the whiteboard) gives the position relative to the whiteboard.
+                const x = event.clientX - whiteboard.offsetLeft;
+                // this calculates the Y-coordinate (vertical position) of the mouse relative to the whiteboard element.
+                const y = event.clientY - whiteboard.offsetTop;
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                // This sets the left position of the dot within the whiteboard to the calculated X-coordinate, positioning it horizontally where the mouse was clicked.
+                dot.style.left = `${x}px`;
+                //  This sets the top position of the dot within the whiteboard to the calculated Y-coordinate, positioning it vertically where the mouse was clicked.
+                dot.style.top = `${y}px`;
+                whiteboard.appendChild(dot);
+
+                const data = {
+                    'x': x,
+                    'y': y
+                };
+
+                socket.send(JSON.stringify(data));
+            }
+        });
+
+        socket.onmessage = function(e) {
+            // convert string into json dict
+            const data = JSON.parse(e.data);
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = `${data.x}px`;
+            dot.style.top = `${data.y}px`;
+            whiteboard.appendChild(dot);
+        };
+    </script>
+</body>
+</html>
